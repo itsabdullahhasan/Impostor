@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, ShieldQuestion } from "lucide-react";
+import { Eye, ShieldQuestion, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameState } from "../lib/gameLogic";
 
 type RevealScreenProps = {
   gameState: GameState;
   updateGameState: (updates: Partial<GameState>) => void;
+  onReset: () => void;
 };
 
-export default function RevealScreen({ gameState, updateGameState }: RevealScreenProps) {
+export default function RevealScreen({ gameState, updateGameState, onReset }: RevealScreenProps) {
   const [isRevealed, setIsRevealed] = useState(false);
   
   const { players, currentPlayerIndex, imposterIds, mode, crewmateWord, imposterWord } = gameState;
@@ -38,6 +39,22 @@ export default function RevealScreen({ gameState, updateGameState }: RevealScree
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col items-center justify-center p-6" data-testid="reveal-screen">
+      {/* New Game button — only shown on the safe pass screen, never during reveal */}
+      {!isRevealed && (
+        <div className="absolute top-4 right-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onReset}
+            className="text-muted-foreground hover:text-foreground gap-1.5"
+            data-testid="button-new-game"
+          >
+            <RotateCcw className="w-4 h-4" />
+            New Game
+          </Button>
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {!isRevealed ? (
           <motion.div

@@ -59,7 +59,7 @@ function App() {
             onOpenThemeEditor={() => setShowThemeEditor(true)}
           />
         ) : gameState.phase === "reveal" ? (
-          <RevealScreen gameState={gameState} updateGameState={updateGameState} />
+          <RevealScreen gameState={gameState} updateGameState={updateGameState} onReset={resetToSetup} />
         ) : gameState.phase === "done" ? (
           <GameReadyScreen gameState={gameState} onReset={resetToSetup} />
         ) : null}
