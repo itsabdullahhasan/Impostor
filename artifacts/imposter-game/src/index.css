@@ -129,4 +129,12 @@
     color: hsl(var(--muted-foreground));
     pointer-events: none;
   }
+
+  .safe-bottom {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

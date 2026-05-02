@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, X, Settings2, Dices, Shuffle } from "lucide-react";
+import { Plus, X, Settings2, Shuffle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,7 +127,7 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 py-8 space-y-8 pb-32" data-testid="setup-screen">
+    <div className="max-w-md mx-auto w-full p-4 py-8 space-y-8" style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }} data-testid="setup-screen">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-black tracking-tighter text-primary">IMPOSTER</h1>
         <p className="text-muted-foreground uppercase tracking-widest text-sm font-semibold">Word Game</p>
@@ -262,42 +262,42 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
 
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Imposter Count</Label>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant={imposterMode === "random" ? "default" : "outline"}
-                      className={`flex-1 h-12 ${imposterMode === "random" ? "bg-primary" : "border-primary/20"}`}
+                  <div className="flex gap-2 flex-wrap">
+                    {/* Random pill */}
+                    <button
                       onClick={() => setImposterMode("random")}
+                      className={`flex items-center gap-2 px-5 h-14 rounded-2xl font-bold text-base transition-all duration-150 active:scale-95 ${
+                        imposterMode === "random"
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                          : "bg-background/50 border border-primary/20 text-muted-foreground hover:border-primary/40"
+                      }`}
                       data-testid="button-imposter-random"
                     >
-                      <Shuffle className="w-4 h-4 mr-2" /> Random
-                    </Button>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant={imposterMode === "manual" ? "default" : "outline"}
-                        className={`h-12 w-12 p-0 ${imposterMode === "manual" ? "bg-primary" : "border-primary/20"}`}
-                        onClick={() => setImposterMode("manual")}
-                        data-testid="button-imposter-manual"
+                      <Shuffle className="w-4 h-4 shrink-0" />
+                      Random
+                    </button>
+                    {/* Numbered pills — one per valid count */}
+                    {Array.from({ length: Math.max(1, Math.floor((players.length - 1) / 2)) }, (_, i) => i + 1).map(n => (
+                      <button
+                        key={n}
+                        onClick={() => { setImposterMode("manual"); setManualImposterCount(n); }}
+                        className={`h-14 w-14 rounded-2xl font-black text-xl transition-all duration-150 active:scale-95 ${
+                          imposterMode === "manual" && manualImposterCount === n
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                            : "bg-background/50 border border-primary/20 text-muted-foreground hover:border-primary/40"
+                        }`}
+                        data-testid={`button-imposter-count-${n}`}
                       >
-                        <Dices className="w-4 h-4" />
-                      </Button>
-                      {imposterMode === "manual" && (
-                        <Input 
-                          type="number" 
-                          min={1} 
-                          max={Math.max(1, Math.floor((players.length - 1) / 2))}
-                          value={manualImposterCount}
-                          onChange={(e) => setManualImposterCount(parseInt(e.target.value) || 1)}
-                          className="w-16 h-12 text-center text-lg bg-background/50 border-primary/20"
-                          data-testid="input-manual-imposter-count"
-                        />
-                      )}
-                    </div>
+                        {n}
+                      </button>
+                    ))}
                   </div>
-                  {imposterMode === "random" && (
-                    <p className="text-xs text-muted-foreground text-center">
-                      Will randomly pick between 1 and {Math.max(1, Math.floor((players.length - 1) / 2))} imposters.
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {imposterMode === "random"
+                      ? `Will randomly pick between 1 and ${Math.max(1, Math.floor((players.length - 1) / 2))} imposters.`
+                      : `${manualImposterCount} imposter${manualImposterCount > 1 ? "s" : ""} out of ${players.length} players.`
+                    }
+                  </p>
                 </div>
               </motion.div>
             ) : (
@@ -357,7 +357,7 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
         </CardContent>
       </Card>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-primary/10">
+      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-primary/10 px-4 pt-3" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
         <Button 
           className="w-full h-16 text-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20" 
           size="lg"
