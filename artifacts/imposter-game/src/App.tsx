@@ -7,16 +7,35 @@ import RevealScreen from "./pages/RevealScreen";
 import ThemeEditor from "./pages/ThemeEditor";
 import GameReadyScreen from "./pages/GameReadyScreen";
 
+const SETUP_STORAGE_KEY = "imposter-game-setup";
+
+function loadSavedSetup(): Partial<GameState> {
+  try {
+    const raw = localStorage.getItem(SETUP_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return {
+      players: Array.isArray(parsed.players) ? parsed.players : undefined,
+      mode: parsed.mode ?? undefined,
+      selectedTheme: parsed.selectedTheme ?? undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 function App() {
+  const saved = loadSavedSetup();
+
   const [gameState, setGameState] = useState<GameState>({
-    players: [
+    players: saved.players ?? [
       { id: "1", name: "Player 1" },
       { id: "2", name: "Player 2" },
       { id: "3", name: "Player 3" },
     ],
     imposterIds: [],
-    mode: "A",
-    selectedTheme: null,
+    mode: saved.mode ?? "A",
+    selectedTheme: saved.selectedTheme ?? null,
     selectedPair: null,
     crewmateWord: null,
     imposterWord: null,
@@ -28,9 +47,24 @@ function App() {
   const [showThemeEditor, setShowThemeEditor] = useState(false);
 
   useEffect(() => {
-    // Force dark mode on document element
     document.documentElement.classList.add('dark');
   }, []);
+
+  // Persist setup fields whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        SETUP_STORAGE_KEY,
+        JSON.stringify({
+          players: gameState.players,
+          mode: gameState.mode,
+          selectedTheme: gameState.selectedTheme,
+        })
+      );
+    } catch {
+      // localStorage unavailable — silently skip
+    }
+  }, [gameState.players, gameState.mode, gameState.selectedTheme]);
 
   const updateGameState = (updates: Partial<GameState>) => {
     setGameState((prev) => ({ ...prev, ...updates }));
