@@ -1,14 +1,15 @@
 import { motion } from "framer-motion";
-import { RefreshCcw, Skull } from "lucide-react";
+import { RefreshCcw, Skull, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameState } from "../lib/gameLogic";
 
 type GameReadyScreenProps = {
   gameState: GameState;
   onReset: () => void;
+  onPlayAgain: () => void;
 };
 
-export default function GameReadyScreen({ gameState, onReset }: GameReadyScreenProps) {
+export default function GameReadyScreen({ gameState, onReset, onPlayAgain }: GameReadyScreenProps) {
   return (
     <div className="fixed inset-0 bg-background flex flex-col items-center justify-center p-6 text-center" data-testid="game-ready-screen">
       <motion.div
@@ -59,15 +60,25 @@ export default function GameReadyScreen({ gameState, onReset }: GameReadyScreenP
           Start discussing. Try to find the imposter(s).
         </p>
 
-        <Button 
-          size="lg" 
-          variant="outline"
-          className="w-full h-16 text-xl font-bold uppercase tracking-widest border-primary/30 text-primary hover:bg-primary/10"
-          onClick={onReset}
-          data-testid="button-play-again"
-        >
-          <RefreshCcw className="mr-3 w-6 h-6" /> Play Again
-        </Button>
+        <div className="space-y-3">
+          <Button
+            size="lg"
+            className="w-full h-16 text-xl font-bold uppercase tracking-widest shadow-lg shadow-primary/20"
+            onClick={onPlayAgain}
+            data-testid="button-play-again"
+          >
+            <RefreshCcw className="mr-3 w-6 h-6" /> Play Again
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full h-12 text-base font-semibold border-primary/20 text-muted-foreground hover:text-foreground hover:border-primary/40"
+            onClick={onReset}
+            data-testid="button-new-game"
+          >
+            <Settings className="mr-2 w-4 h-4" /> Change Setup
+          </Button>
+        </div>
       </motion.div>
     </div>
   );

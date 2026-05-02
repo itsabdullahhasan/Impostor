@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { GameState } from "./lib/gameLogic";
+import { GameState, startGame } from "./lib/gameLogic";
 import SetupScreen from "./pages/SetupScreen";
 import RevealScreen from "./pages/RevealScreen";
 import ThemeEditor from "./pages/ThemeEditor";
@@ -47,6 +47,26 @@ function App() {
     }));
   };
 
+  const playAgain = () => {
+    const { players, mode, selectedTheme, useCustomSetup } = gameState;
+    try {
+      const newState = startGame({
+        players,
+        mode,
+        imposterMode: "random",
+        manualImposterCount: 1,
+        useCustomSetup: false,
+        selectedTheme,
+        customWordA: "",
+        customWordB: "",
+        customImposterIds: [],
+      });
+      setGameState((prev) => ({ ...prev, ...newState }));
+    } catch {
+      resetToSetup();
+    }
+  };
+
   return (
     <TooltipProvider>
       <div className="min-h-[100dvh] w-full bg-background text-foreground overflow-x-hidden selection:bg-primary/30">
@@ -61,7 +81,7 @@ function App() {
         ) : gameState.phase === "reveal" ? (
           <RevealScreen gameState={gameState} updateGameState={updateGameState} onReset={resetToSetup} />
         ) : gameState.phase === "done" ? (
-          <GameReadyScreen gameState={gameState} onReset={resetToSetup} />
+          <GameReadyScreen gameState={gameState} onReset={resetToSetup} onPlayAgain={playAgain} />
         ) : null}
       </div>
       <Toaster />
