@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus, Trash2, Save, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Pencil, Upload, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Theme, WordPair, loadCustomThemes, saveCustomThemes, PREBUILT_THEMES } from "../lib/themes";
+
+function parseImportString(input: string): WordPair[] {
+  const matches = [...input.matchAll(/\{([^,}]+),([^}]+)\}/g)];
+  return matches
+    .map(m => ({ wordA: m[1].trim(), wordB: m[2].trim() }))
+    .filter(p => p.wordA && p.wordB);
+}
 
 type ThemeEditorProps = {
   onBack: () => void;
@@ -16,6 +23,8 @@ export default function ThemeEditor({ onBack }: ThemeEditorProps) {
   const { toast } = useToast();
   const [customThemes, setCustomThemes] = useState<Theme[]>([]);
   const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
+  const [importText, setImportText] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     setCustomThemes(loadCustomThemes());
@@ -93,6 +102,21 @@ export default function ThemeEditor({ onBack }: ThemeEditorProps) {
     });
   };
 
+  const handleImport = () => {
+    const parsed = parseImportString(importText);
+    if (parsed.length === 0) {
+      toast({ title: "Nothing imported", description: "No valid pairs found. Use format: {Word A,Word B},{Word A,Word B}", variant: "destructive" });
+      return;
+    }
+    if (!editingTheme) return;
+    // Replace existing empty pairs, then append parsed ones
+    const existingFilled = editingTheme.pairs.filter(p => p.wordA.trim() || p.wordB.trim());
+    setEditingTheme({ ...editingTheme, pairs: [...existingFilled, ...parsed] });
+    setImportText("");
+    setImportOpen(false);
+    toast({ title: `Imported ${parsed.length} pair${parsed.length > 1 ? "s" : ""}` });
+  };
+
   return (
     <div className="max-w-md mx-auto min-h-screen bg-background" data-testid="theme-editor">
       <div className="sticky top-0 z-10 bg-background/90 backdrop-blur-lg border-b border-primary/10 p-4 flex items-center gap-4">
@@ -114,6 +138,52 @@ export default function ThemeEditor({ onBack }: ThemeEditorProps) {
                 className="h-14 text-xl bg-card border-primary/20"
                 data-testid="input-theme-name"
               />
+            </div>
+
+            {/* Import section */}
+            <div className="rounded-xl border border-primary/20 overflow-hidden">
+              <button
+                onClick={() => setImportOpen(o => !o)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-card/50 hover:bg-card/80 transition-colors"
+                data-testid="button-toggle-import"
+              >
+                <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-primary">
+                  <Upload className="w-4 h-4" /> Import Pairs
+                </span>
+                {importOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+              </button>
+              <AnimatePresence>
+                {importOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-4 space-y-3 border-t border-primary/10">
+                      <p className="text-xs text-muted-foreground">
+                        Paste pairs in the format: <span className="font-mono text-primary/80">{"{"}Word A,Word B{"},{"}Word A,Word B{"}"}</span>
+                      </p>
+                      <textarea
+                        value={importText}
+                        onChange={e => setImportText(e.target.value)}
+                        placeholder="{Pizza,Burger},{Milk,Juice},{Cake,Muffin}"
+                        rows={3}
+                        className="w-full rounded-lg border border-primary/20 bg-background px-3 py-2 text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground/50"
+                        data-testid="textarea-import"
+                      />
+                      <Button
+                        onClick={handleImport}
+                        className="w-full h-11"
+                        data-testid="button-import-pairs"
+                      >
+                        <Upload className="w-4 h-4 mr-2" /> Import
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="space-y-4">
