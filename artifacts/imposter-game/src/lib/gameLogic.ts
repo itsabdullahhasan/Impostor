@@ -75,16 +75,14 @@ export function startGame(params: StartGameParams): Partial<GameState> {
       }
     }
 
-    // Assign imposters
+    // Assign imposters — max is players.length - 1 (at least one crewmate must remain)
+    const maxImposters = players.length - 1;
     let numImposters = 1;
-    const maxImposters = Math.floor((players.length - 1) / 2);
-    
+
     if (imposterMode === "manual") {
       numImposters = Math.max(1, Math.min(manualImposterCount, maxImposters));
     } else {
       numImposters = Math.floor(Math.random() * maxImposters) + 1;
-      // Ensure at least 1
-      numImposters = Math.max(1, numImposters);
     }
 
     const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
@@ -108,6 +106,6 @@ export function startGame(params: StartGameParams): Partial<GameState> {
 export function validateImposterCount(playerCount: number, requestedCount: number): string | null {
   if (playerCount < 3) return "Need at least 3 players.";
   if (requestedCount < 1) return "Need at least 1 imposter.";
-  if (requestedCount >= playerCount / 2) return "Too many imposters.";
+  if (requestedCount >= playerCount) return "Must have at least 1 crewmate.";
   return null;
 }

@@ -276,8 +276,8 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
                       <Shuffle className="w-4 h-4 shrink-0" />
                       Random
                     </button>
-                    {/* Numbered pills — one per valid count */}
-                    {Array.from({ length: Math.max(1, Math.floor((players.length - 1) / 2)) }, (_, i) => i + 1).map(n => (
+                    {/* Numbered pills — one per valid count (all counts up to players - 1) */}
+                    {Array.from({ length: players.length - 1 }, (_, i) => i + 1).map(n => (
                       <button
                         key={n}
                         onClick={() => { setImposterMode("manual"); setManualImposterCount(n); }}
@@ -294,7 +294,7 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {imposterMode === "random"
-                      ? `Will randomly pick between 1 and ${Math.max(1, Math.floor((players.length - 1) / 2))} imposters.`
+                      ? `Will randomly pick between 1 and ${players.length - 1} imposters.`
                       : `${manualImposterCount} imposter${manualImposterCount > 1 ? "s" : ""} out of ${players.length} players.`
                     }
                   </p>
@@ -344,9 +344,9 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
                         </Button>
                       ))}
                     </div>
-                    {customImposterIds.length >= players.length / 2 && (
+                    {customImposterIds.length >= players.length && (
                       <p className="text-xs text-destructive mt-1">
-                        Warning: Imposters should be strictly less than half the players.
+                        At least one player must be a crewmate.
                       </p>
                     )}
                   </div>
