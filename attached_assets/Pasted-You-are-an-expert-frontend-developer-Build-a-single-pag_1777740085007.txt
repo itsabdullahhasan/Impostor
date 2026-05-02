@@ -1,0 +1,226 @@
+You are an expert frontend developer.
+
+Build a **single-page React web app** that acts as a **role and word distributor for the Imposter Word Game**, designed for one device being passed between players.
+
+This app ONLY handles setup + secure role reveal. No gameplay features are required.
+
+---
+
+## 1. Tech Stack
+
+* React (functional components + hooks)
+* Tailwind CSS
+* Local storage OR lightweight database (e.g. IndexedDB) for saving custom themes
+
+---
+
+## 2. Core Game Modes
+
+### Mode A — Classic
+
+* Imposters receive **NO word**
+* Crewmates receive **ONE word**
+
+### Mode B — Paired Words
+
+* Each round uses a **pair of related words**
+* Crewmates receive one word
+* Imposters receive the *other* word
+* Imposters do NOT know their word is different
+
+---
+
+## 3. Theme System
+
+### Prebuilt Themes
+
+Include multiple default themes. Each theme must consist of **word pairs**, not single words.
+
+Example:
+Food Theme:
+
+* (Pizza, Burger)
+* (Milk, Juice)
+* (Cake, Muffin)
+
+Animals Theme:
+
+* (Dog, Wolf)
+* (Cat, Tiger)
+
+---
+
+### Custom Theme Editor
+
+Allow users to:
+
+* Create a theme
+* Add/edit/delete **word pairs**
+* Save themes locally (localStorage or IndexedDB)
+
+Rules:
+
+* Each entry MUST be a pair (2 related words)
+* Validate input (no empty fields)
+
+---
+
+## 4. Word Selection Logic (CRITICAL)
+
+When starting a game:
+
+1. Select a theme
+2. Randomly select ONE word pair from that theme
+
+### If Mode A:
+
+* Randomly choose ONE of the two words
+* Crewmates get that word
+* Imposters get NOTHING
+
+### If Mode B:
+
+* Use BOTH words in the pair:
+
+  * Crewmates → word A
+  * Imposters → word B
+* Randomly decide which side gets which word
+
+---
+
+## 5. Imposter Settings
+
+* Allow user to:
+
+  * Choose number of imposters manually
+  * OR select “Random imposters”
+
+### Constraints:
+
+* Always ensure the game is playable:
+
+  * Minimum 1 imposter
+  * Imposters must be < total players / 2
+
+---
+
+## 6. Custom Game Mode
+
+Add an optional **Custom Game Setup**:
+
+User can:
+
+* Manually input:
+
+  * Word A
+  * Word B (optional, for Mode B)
+* Manually select:
+
+  * Which players are imposters
+
+Overrides:
+
+* Skips random assignment
+* Uses exact user-defined setup
+
+---
+
+## 7. Setup Screen
+
+Inputs:
+
+* Player names
+* Mode (A or B)
+* Theme selection OR custom mode
+* Number of imposters (or random toggle)
+
+Button: **Start Game**
+
+---
+
+## 8. Role Reveal System (Pass-and-Play)
+
+For each player:
+
+### Step 1:
+
+* “Pass device to [Player Name]”
+* Button: “Tap to Reveal”
+
+### Step 2:
+
+* If crewmate:
+
+  * Show assigned word
+* If imposter:
+
+  * Mode A → “You are the IMPOSTER”
+  * Mode B → show their assigned (fake) word
+
+### Step 3:
+
+* Button: “Hide & Pass”
+* Screen fully clears before next player
+
+---
+
+## 9. State Management
+
+Track:
+
+* players[]
+* imposters[]
+* mode
+* selected theme
+* selected pair
+* assigned words
+* current player index
+* phase (setup → reveal → next player)
+
+---
+
+## 10. UX Requirements
+
+* Prevent information leaks:
+
+  * No word visible before reveal
+  * Screen clears fully between players
+* Large text (mobile-first)
+* Minimal, clean UI
+* Fast transitions
+
+---
+
+## 11. Output Requirements
+
+Provide:
+
+1. Full React code
+2. Component structure
+3. Theme data structure (pairs-based)
+4. Local storage implementation for themes
+5. Setup + run instructions
+
+---
+
+## 12. Constraints
+
+* Fully offline
+* No external APIs
+* Optimised for phone use (pass-and-play)
+
+---
+
+## 13. Design Goal
+
+This should feel like a **smart setup tool**, not a full game:
+
+* Fast to configure
+* Impossible to cheat accidentally
+* Flexible for different play styles
+
+Focus heavily on correctness of:
+
+* Word assignment logic
+* Imposter distribution
+* Theme pair handling
