@@ -89,8 +89,11 @@ export function startGame(params: StartGameParams): Partial<GameState> {
     imposterIds = shuffledPlayers.slice(0, numImposters).map(p => p.id);
   }
 
+  // Shuffle reveal order so it's not always Player 1 first
+  const revealOrder = [...players].sort(() => Math.random() - 0.5);
+
   return {
-    players,
+    players: revealOrder,
     mode,
     imposterIds,
     selectedTheme,

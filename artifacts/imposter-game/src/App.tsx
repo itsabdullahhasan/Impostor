@@ -9,6 +9,18 @@ import GameReadyScreen from "./pages/GameReadyScreen";
 
 const SETUP_STORAGE_KEY = "imposter-game-setup";
 const LAST_PARAMS_KEY = "imposter-game-last-params";
+const SCORE_KEY = "imposter-game-score";
+
+type Score = { crewmates: number; imposters: number };
+
+function loadScore(): Score {
+  try {
+    const raw = localStorage.getItem(SCORE_KEY);
+    return raw ? JSON.parse(raw) : { crewmates: 0, imposters: 0 };
+  } catch {
+    return { crewmates: 0, imposters: 0 };
+  }
+}
 
 function loadSavedSetup(): Partial<GameState> {
   try {
@@ -55,6 +67,7 @@ function App() {
   });
 
   const [lastStartParams, setLastStartParams] = useState<StartGameParams | null>(loadLastParams);
+  const [score, setScore] = useState<Score>(loadScore);
   const [showThemeEditor, setShowThemeEditor] = useState(false);
 
   useEffect(() => {
@@ -78,6 +91,17 @@ function App() {
       localStorage.setItem(LAST_PARAMS_KEY, JSON.stringify(lastStartParams));
     } catch {}
   }, [lastStartParams]);
+
+  // Persist score whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(SCORE_KEY, JSON.stringify(score));
+    } catch {}
+  }, [score]);
+
+  const handleScoreChange = (delta: Partial<Score>) => {
+    setScore((prev) => ({ ...prev, ...delta }));
+  };
 
   const updateGameState = (updates: Partial<GameState>) => {
     setGameState((prev) => ({ ...prev, ...updates }));
@@ -124,7 +148,7 @@ function App() {
         ) : gameState.phase === "reveal" ? (
           <RevealScreen gameState={gameState} updateGameState={updateGameState} onReset={resetToSetup} />
         ) : gameState.phase === "done" ? (
-          <GameReadyScreen gameState={gameState} onReset={resetToSetup} onPlayAgain={playAgain} />
+          <GameReadyScreen gameState={gameState} score={score} onScoreChange={handleScoreChange} onReset={resetToSetup} onPlayAgain={playAgain} />
         ) : null}
       </div>
       <Toaster />
