@@ -34,6 +34,9 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
   const [customWordA, setCustomWordA] = useState("");
   const [customWordB, setCustomWordB] = useState("");
   const [customImposterIds, setCustomImposterIds] = useState<string[]>([]);
+  const [customImposterRandom, setCustomImposterRandom] = useState(false);
+  const [customImposterMode, setCustomImposterMode] = useState<ImposterMode>("random");
+  const [customManualImposterCount, setCustomManualImposterCount] = useState(1);
 
   useEffect(() => {
     const loadedThemes = getAllThemes();
@@ -82,14 +85,16 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
         toast({ title: "Missing Word", description: "You must provide Word B for Paired mode.", variant: "destructive" });
         return;
       }
-      if (customImposterIds.length === 0) {
-        toast({ title: "No Imposters", description: "You must select at least one imposter.", variant: "destructive" });
-        return;
-      }
-      const err = validateImposterCount(players.length, customImposterIds.length);
-      if (err) {
-        toast({ title: "Invalid Imposters", description: err, variant: "destructive" });
-        return;
+      if (!customImposterRandom) {
+        if (customImposterIds.length === 0) {
+          toast({ title: "No Imposters", description: "You must select at least one imposter.", variant: "destructive" });
+          return;
+        }
+        const err = validateImposterCount(players.length, customImposterIds.length);
+        if (err) {
+          toast({ title: "Invalid Imposters", description: err, variant: "destructive" });
+          return;
+        }
       }
     } else {
       const selectedTheme = themes.find(t => t.id === selectedThemeId);
@@ -109,6 +114,17 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
     const selectedTheme = themes.find(t => t.id === selectedThemeId) || null;
 
     try {
+      let resolvedImposterIds = customImposterIds;
+
+      if (useCustomSetup && customImposterRandom) {
+        const shuffled = [...players].sort(() => Math.random() - 0.5);
+        const count =
+          customImposterMode === "random"
+            ? Math.floor(Math.random() * (players.length - 1)) + 1
+            : Math.min(customManualImposterCount, players.length - 1);
+        resolvedImposterIds = shuffled.slice(0, count).map((p) => p.id);
+      }
+
       const newGameState = startGame({
         players,
         mode,
@@ -118,7 +134,7 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
         selectedTheme,
         customWordA,
         customWordB,
-        customImposterIds
+        customImposterIds: resolvedImposterIds,
       });
       updateGameState(newGameState);
     } catch (e: any) {
@@ -329,26 +345,89 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Select Imposters</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {players.map((p) => (
-                        <Button
-                          key={p.id}
-                          variant={customImposterIds.includes(p.id) ? "destructive" : "outline"}
-                          className={`h-12 justify-start overflow-hidden ${!customImposterIds.includes(p.id) && "border-primary/20 bg-background/50"}`}
-                          onClick={() => toggleCustomImposter(p.id)}
-                          data-testid={`button-custom-imposter-${p.id}`}
-                        >
-                          <span className="truncate">{p.name}</span>
-                        </Button>
-                      ))}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Imposters</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Random</span>
+                        <Switch
+                          checked={customImposterRandom}
+                          onCheckedChange={setCustomImposterRandom}
+                          data-testid="switch-custom-imposter-random"
+                        />
+                      </div>
                     </div>
-                    {customImposterIds.length >= players.length && (
-                      <p className="text-xs text-destructive mt-1">
-                        At least one player must be a crewmate.
-                      </p>
-                    )}
+
+                    <AnimatePresence mode="wait">
+                      {customImposterRandom ? (
+                        <motion.div
+                          key="random-imposters"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="space-y-2 overflow-hidden"
+                        >
+                          <div className="flex gap-2 flex-wrap">
+                            <button
+                              onClick={() => setCustomImposterMode("random")}
+                              className={`flex items-center gap-2 px-5 h-14 rounded-2xl font-bold text-base transition-all duration-150 active:scale-95 ${
+                                customImposterMode === "random"
+                                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                                  : "bg-background/50 border border-primary/20 text-muted-foreground hover:border-primary/40"
+                              }`}
+                            >
+                              <Shuffle className="w-4 h-4 shrink-0" />
+                              Random
+                            </button>
+                            {Array.from({ length: players.length - 1 }, (_, i) => i + 1).map((n) => (
+                              <button
+                                key={n}
+                                onClick={() => { setCustomImposterMode("manual"); setCustomManualImposterCount(n); }}
+                                className={`h-14 w-14 rounded-2xl font-black text-xl transition-all duration-150 active:scale-95 ${
+                                  customImposterMode === "manual" && customManualImposterCount === n
+                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                                    : "bg-background/50 border border-primary/20 text-muted-foreground hover:border-primary/40"
+                                }`}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {customImposterMode === "random"
+                              ? `App will randomly pick between 1 and ${players.length - 1} imposters.`
+                              : `App will randomly assign ${customManualImposterCount} imposter${customManualImposterCount > 1 ? "s" : ""}.`}
+                          </p>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="manual-imposters"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="grid grid-cols-2 gap-2">
+                            {players.map((p) => (
+                              <Button
+                                key={p.id}
+                                variant={customImposterIds.includes(p.id) ? "destructive" : "outline"}
+                                className={`h-12 justify-start overflow-hidden ${!customImposterIds.includes(p.id) && "border-primary/20 bg-background/50"}`}
+                                onClick={() => toggleCustomImposter(p.id)}
+                                data-testid={`button-custom-imposter-${p.id}`}
+                              >
+                                <span className="truncate">{p.name}</span>
+                              </Button>
+                            ))}
+                          </div>
+                          {customImposterIds.length >= players.length && (
+                            <p className="text-xs text-destructive mt-1">
+                              At least one player must be a crewmate.
+                            </p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               </motion.div>
