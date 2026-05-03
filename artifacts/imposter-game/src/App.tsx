@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { GameState, startGame } from "./lib/gameLogic";
+import { GameState, StartGameParams, startGame } from "./lib/gameLogic";
 import SetupScreen from "./pages/SetupScreen";
 import RevealScreen from "./pages/RevealScreen";
 import ThemeEditor from "./pages/ThemeEditor";
 import GameReadyScreen from "./pages/GameReadyScreen";
 
 const SETUP_STORAGE_KEY = "imposter-game-setup";
+const LAST_PARAMS_KEY = "imposter-game-last-params";
 
 function loadSavedSetup(): Partial<GameState> {
   try {
@@ -17,10 +18,19 @@ function loadSavedSetup(): Partial<GameState> {
     return {
       players: Array.isArray(parsed.players) ? parsed.players : undefined,
       mode: parsed.mode ?? undefined,
-      selectedTheme: parsed.selectedTheme ?? undefined,
     };
   } catch {
     return {};
+  }
+}
+
+function loadLastParams(): StartGameParams | null {
+  try {
+    const raw = localStorage.getItem(LAST_PARAMS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as StartGameParams;
+  } catch {
+    return null;
   }
 }
 
@@ -35,7 +45,7 @@ function App() {
     ],
     imposterIds: [],
     mode: saved.mode ?? "A",
-    selectedTheme: saved.selectedTheme ?? null,
+    selectedTheme: null,
     selectedPair: null,
     crewmateWord: null,
     imposterWord: null,
@@ -44,30 +54,37 @@ function App() {
     useCustomSetup: false,
   });
 
+  const [lastStartParams, setLastStartParams] = useState<StartGameParams | null>(loadLastParams);
   const [showThemeEditor, setShowThemeEditor] = useState(false);
 
   useEffect(() => {
-    document.documentElement.classList.add('dark');
+    document.documentElement.classList.add("dark");
   }, []);
 
-  // Persist setup fields whenever they change
+  // Persist players + mode whenever they change
   useEffect(() => {
     try {
       localStorage.setItem(
         SETUP_STORAGE_KEY,
-        JSON.stringify({
-          players: gameState.players,
-          mode: gameState.mode,
-          selectedTheme: gameState.selectedTheme,
-        })
+        JSON.stringify({ players: gameState.players, mode: gameState.mode })
       );
-    } catch {
-      // localStorage unavailable — silently skip
-    }
-  }, [gameState.players, gameState.mode, gameState.selectedTheme]);
+    } catch {}
+  }, [gameState.players, gameState.mode]);
+
+  // Persist last start params whenever they change
+  useEffect(() => {
+    if (!lastStartParams) return;
+    try {
+      localStorage.setItem(LAST_PARAMS_KEY, JSON.stringify(lastStartParams));
+    } catch {}
+  }, [lastStartParams]);
 
   const updateGameState = (updates: Partial<GameState>) => {
     setGameState((prev) => ({ ...prev, ...updates }));
+  };
+
+  const handleGameStart = (params: StartGameParams) => {
+    setLastStartParams(params);
   };
 
   const resetToSetup = () => {
@@ -82,19 +99,10 @@ function App() {
   };
 
   const playAgain = () => {
-    const { players, mode, selectedTheme, useCustomSetup } = gameState;
+    const params = lastStartParams;
+    if (!params) { resetToSetup(); return; }
     try {
-      const newState = startGame({
-        players,
-        mode,
-        imposterMode: "random",
-        manualImposterCount: 1,
-        useCustomSetup: false,
-        selectedTheme,
-        customWordA: "",
-        customWordB: "",
-        customImposterIds: [],
-      });
+      const newState = startGame(params);
       setGameState((prev) => ({ ...prev, ...newState }));
     } catch {
       resetToSetup();
@@ -111,6 +119,7 @@ function App() {
             gameState={gameState}
             updateGameState={updateGameState}
             onOpenThemeEditor={() => setShowThemeEditor(true)}
+            onGameStart={handleGameStart}
           />
         ) : gameState.phase === "reveal" ? (
           <RevealScreen gameState={gameState} updateGameState={updateGameState} onReset={resetToSetup} />

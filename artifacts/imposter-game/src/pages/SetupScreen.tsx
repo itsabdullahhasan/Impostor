@@ -12,22 +12,34 @@ import { useToast } from "@/hooks/use-toast";
 import { GameState, StartGameParams, startGame, validateImposterCount, GameMode, ImposterMode } from "../lib/gameLogic";
 import { getAllThemes, Theme } from "../lib/themes";
 
+const SETUP_PREFS_KEY = "imposter-game-prefs";
+
+function loadSetupPrefs(): { selectedThemeId?: string; imposterMode?: ImposterMode; manualImposterCount?: number } {
+  try {
+    const raw = localStorage.getItem(SETUP_PREFS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
 type SetupScreenProps = {
   gameState: GameState;
   updateGameState: (updates: Partial<GameState>) => void;
   onOpenThemeEditor: () => void;
+  onGameStart?: (params: StartGameParams) => void;
 };
 
-export default function SetupScreen({ gameState, updateGameState, onOpenThemeEditor }: SetupScreenProps) {
+export default function SetupScreen({ gameState, updateGameState, onOpenThemeEditor, onGameStart }: SetupScreenProps) {
   const { toast } = useToast();
   
   // Local form state
   const [players, setPlayers] = useState(gameState.players);
   const [mode, setMode] = useState<GameMode>(gameState.mode);
   const [themes, setThemes] = useState<Theme[]>([]);
-  const [selectedThemeId, setSelectedThemeId] = useState<string>("");
-  const [imposterMode, setImposterMode] = useState<ImposterMode>("random");
-  const [manualImposterCount, setManualImposterCount] = useState<number>(1);
+  const [selectedThemeId, setSelectedThemeId] = useState<string>(() => loadSetupPrefs().selectedThemeId ?? "");
+  const [imposterMode, setImposterMode] = useState<ImposterMode>(() => loadSetupPrefs().imposterMode ?? "random");
+  const [manualImposterCount, setManualImposterCount] = useState<number>(() => loadSetupPrefs().manualImposterCount ?? 1);
   
   // Custom setup state
   const [useCustomSetup, setUseCustomSetup] = useState(gameState.useCustomSetup);
@@ -38,13 +50,26 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
   const [customImposterMode, setCustomImposterMode] = useState<ImposterMode>("random");
   const [customManualImposterCount, setCustomManualImposterCount] = useState(1);
 
+  // Load themes once on mount; validate saved theme ID and fall back to first theme
   useEffect(() => {
     const loadedThemes = getAllThemes();
     setThemes(loadedThemes);
-    if (loadedThemes.length > 0 && !selectedThemeId) {
-      setSelectedThemeId(loadedThemes[0].id);
+    if (loadedThemes.length > 0) {
+      setSelectedThemeId((prev) =>
+        prev && loadedThemes.some((t) => t.id === prev) ? prev : loadedThemes[0].id
+      );
     }
-  }, [selectedThemeId]);
+  }, []);
+
+  // Persist imposter prefs whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        SETUP_PREFS_KEY,
+        JSON.stringify({ selectedThemeId, imposterMode, manualImposterCount })
+      );
+    } catch {}
+  }, [selectedThemeId, imposterMode, manualImposterCount]);
 
   const handleAddPlayer = () => {
     setPlayers([...players, { id: crypto.randomUUID(), name: `Player ${players.length + 1}` }]);
@@ -125,7 +150,7 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
         resolvedImposterIds = shuffled.slice(0, count).map((p) => p.id);
       }
 
-      const newGameState = startGame({
+      const params: StartGameParams = {
         players,
         mode,
         imposterMode,
@@ -135,7 +160,10 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
         customWordA,
         customWordB,
         customImposterIds: resolvedImposterIds,
-      });
+      };
+
+      const newGameState = startGame(params);
+      onGameStart?.(params);
       updateGameState(newGameState);
     } catch (e: any) {
       toast({ title: "Error starting game", description: e.message, variant: "destructive" });
