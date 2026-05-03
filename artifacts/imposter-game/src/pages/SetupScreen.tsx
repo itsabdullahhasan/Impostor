@@ -252,37 +252,38 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={mode === "A" ? "default" : "outline"}
-                className={`h-auto py-3 px-4 flex flex-col items-start gap-1 justify-start ${mode === "A" ? "bg-primary text-primary-foreground" : "bg-transparent border-primary/20"}`}
+                className={`h-auto py-3 px-4 flex flex-col items-start gap-1 justify-start whitespace-normal text-left min-w-0 ${mode === "A" ? "bg-primary text-primary-foreground" : "bg-transparent border-primary/20"}`}
                 onClick={() => setMode("A")}
                 data-testid="button-mode-a"
               >
                 <span className="font-bold">Classic</span>
-                <span className="text-xs font-normal opacity-80 text-left">Imposters get nothing</span>
+                <span className="text-xs font-normal opacity-80 text-left break-words w-full">Imposters get nothing</span>
               </Button>
               <Button
                 variant={mode === "B" ? "default" : "outline"}
-                className={`h-auto py-3 px-4 flex flex-col items-start gap-1 justify-start ${mode === "B" ? "bg-primary text-primary-foreground" : "bg-transparent border-primary/20"}`}
+                className={`h-auto py-3 px-4 flex flex-col items-start gap-1 justify-start whitespace-normal text-left min-w-0 ${mode === "B" ? "bg-primary text-primary-foreground" : "bg-transparent border-primary/20"}`}
                 onClick={() => setMode("B")}
                 data-testid="button-mode-b"
               >
                 <span className="font-bold">Paired</span>
-                <span className="text-xs font-normal opacity-80 text-left">Imposters get similar word</span>
+                <span className="text-xs font-normal opacity-80 text-left break-words w-full">Imposters get similar word</span>
               </Button>
             </div>
           </div>
 
           <Separator className="bg-primary/10" />
 
-          <div className="flex items-center justify-between">
-            <Label htmlFor="custom-setup" className="flex flex-col gap-1 cursor-pointer">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="custom-setup" className="flex flex-col gap-1 cursor-pointer min-w-0">
               <span className="text-base font-semibold">Custom Game Master</span>
-              <span className="text-xs text-muted-foreground">Manually choose words and imposters</span>
+              <span className="text-xs text-muted-foreground break-words">Manually choose words and imposters</span>
             </Label>
             <Switch 
               id="custom-setup" 
               checked={useCustomSetup} 
               onCheckedChange={setUseCustomSetup}
               data-testid="switch-custom-setup"
+              className="shrink-0"
             />
           </div>
 
@@ -452,11 +453,11 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
                               <Button
                                 key={p.id}
                                 variant={customImposterIds.includes(p.id) ? "destructive" : "outline"}
-                                className={`h-12 justify-start overflow-hidden ${!customImposterIds.includes(p.id) && "border-primary/20 bg-background/50"}`}
+                                className={`h-auto min-h-12 py-2 px-3 justify-start whitespace-normal text-left min-w-0 ${!customImposterIds.includes(p.id) && "border-primary/20 bg-background/50"}`}
                                 onClick={() => toggleCustomImposter(p.id)}
                                 data-testid={`button-custom-imposter-${p.id}`}
                               >
-                                <span className="truncate">{p.name}</span>
+                                <span className="break-words w-full">{p.name}</span>
                               </Button>
                             ))}
                           </div>
