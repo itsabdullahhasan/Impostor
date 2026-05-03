@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GameState, StartGameParams, startGame } from "./lib/gameLogic";
+import { recordRound } from "./lib/playerStats";
 import SetupScreen from "./pages/SetupScreen";
 import RevealScreen from "./pages/RevealScreen";
 import ThemeEditor from "./pages/ThemeEditor";
 import GameReadyScreen from "./pages/GameReadyScreen";
+import StatsPage from "./pages/StatsPage";
 
 const SETUP_STORAGE_KEY = "imposter-game-setup";
 const LAST_PARAMS_KEY = "imposter-game-last-params";
@@ -69,12 +71,12 @@ function App() {
   const [lastStartParams, setLastStartParams] = useState<StartGameParams | null>(loadLastParams);
   const [score, setScore] = useState<Score>(loadScore);
   const [showThemeEditor, setShowThemeEditor] = useState(false);
+  const [showStatsPage, setShowStatsPage] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
 
-  // Persist players + mode whenever they change
   useEffect(() => {
     try {
       localStorage.setItem(
@@ -84,7 +86,6 @@ function App() {
     } catch {}
   }, [gameState.players, gameState.mode]);
 
-  // Persist last start params whenever they change
   useEffect(() => {
     if (!lastStartParams) return;
     try {
@@ -92,16 +93,11 @@ function App() {
     } catch {}
   }, [lastStartParams]);
 
-  // Persist score whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem(SCORE_KEY, JSON.stringify(score));
     } catch {}
   }, [score]);
-
-  const handleScoreChange = (delta: Partial<Score>) => {
-    setScore((prev) => ({ ...prev, ...delta }));
-  };
 
   const updateGameState = (updates: Partial<GameState>) => {
     setGameState((prev) => ({ ...prev, ...updates }));
@@ -109,6 +105,22 @@ function App() {
 
   const handleGameStart = (params: StartGameParams) => {
     setLastStartParams(params);
+  };
+
+  const handleRecordResult = (side: "crewmates" | "imposters") => {
+    // Update session score
+    setScore((prev) => ({
+      ...prev,
+      crewmates: side === "crewmates" ? prev.crewmates + 1 : prev.crewmates,
+      imposters: side === "imposters" ? prev.imposters + 1 : prev.imposters,
+    }));
+
+    // Update permanent per-player stats
+    const allNames = gameState.players.map((p) => p.name);
+    const imposterNames = gameState.players
+      .filter((p) => gameState.imposterIds.includes(p.id))
+      .map((p) => p.name);
+    recordRound(allNames, imposterNames, side);
   };
 
   const resetToSetup = () => {
@@ -136,19 +148,28 @@ function App() {
   return (
     <TooltipProvider>
       <div className="min-h-[100dvh] w-full bg-background text-foreground overflow-x-hidden selection:bg-primary/30">
-        {showThemeEditor ? (
+        {showStatsPage ? (
+          <StatsPage onBack={() => setShowStatsPage(false)} />
+        ) : showThemeEditor ? (
           <ThemeEditor onBack={() => setShowThemeEditor(false)} />
         ) : gameState.phase === "setup" ? (
           <SetupScreen
             gameState={gameState}
             updateGameState={updateGameState}
             onOpenThemeEditor={() => setShowThemeEditor(true)}
+            onOpenStats={() => setShowStatsPage(true)}
             onGameStart={handleGameStart}
           />
         ) : gameState.phase === "reveal" ? (
           <RevealScreen gameState={gameState} updateGameState={updateGameState} onReset={resetToSetup} />
         ) : gameState.phase === "done" ? (
-          <GameReadyScreen gameState={gameState} score={score} onScoreChange={handleScoreChange} onReset={resetToSetup} onPlayAgain={playAgain} />
+          <GameReadyScreen
+            gameState={gameState}
+            score={score}
+            onRecordResult={handleRecordResult}
+            onReset={resetToSetup}
+            onPlayAgain={playAgain}
+          />
         ) : null}
       </div>
       <Toaster />

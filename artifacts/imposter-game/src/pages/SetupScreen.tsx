@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, X, Settings2, Shuffle } from "lucide-react";
+import { Plus, X, Settings2, Shuffle, BarChart2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +27,11 @@ type SetupScreenProps = {
   gameState: GameState;
   updateGameState: (updates: Partial<GameState>) => void;
   onOpenThemeEditor: () => void;
+  onOpenStats: () => void;
   onGameStart?: (params: StartGameParams) => void;
 };
 
-export default function SetupScreen({ gameState, updateGameState, onOpenThemeEditor, onGameStart }: SetupScreenProps) {
+export default function SetupScreen({ gameState, updateGameState, onOpenThemeEditor, onOpenStats, onGameStart }: SetupScreenProps) {
   const { toast } = useToast();
   
   // Local form state
@@ -172,9 +173,20 @@ export default function SetupScreen({ gameState, updateGameState, onOpenThemeEdi
 
   return (
     <div className="max-w-md mx-auto w-full p-4 py-8 space-y-8" style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }} data-testid="setup-screen">
-      <div className="text-center space-y-2">
-        <h1 className="text-4xl font-black tracking-tighter text-primary">IMPOSTER</h1>
-        <p className="text-muted-foreground uppercase tracking-widest text-sm font-semibold">Word Game</p>
+      <div className="relative flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-black tracking-tighter text-primary">IMPOSTER</h1>
+          <p className="text-muted-foreground uppercase tracking-widest text-sm font-semibold">Word Game</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onOpenStats}
+          className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          data-testid="button-open-stats"
+        >
+          <BarChart2 className="w-5 h-5" />
+        </Button>
       </div>
 
       {/* PLAYERS */}

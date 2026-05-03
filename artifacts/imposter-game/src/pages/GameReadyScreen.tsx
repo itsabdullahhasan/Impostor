@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RefreshCcw, Skull, Settings, Eye, EyeOff, Play, Pause, RotateCcw, Trophy, Timer } from "lucide-react";
+import { RefreshCcw, Skull, Settings, Eye, EyeOff, Play, Pause, RotateCcw, Trophy, Timer, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameState } from "../lib/gameLogic";
 
@@ -9,7 +9,7 @@ type Score = { crewmates: number; imposters: number };
 type GameReadyScreenProps = {
   gameState: GameState;
   score: Score;
-  onScoreChange: (delta: Partial<Score>) => void;
+  onRecordResult: (side: "crewmates" | "imposters") => void;
   onReset: () => void;
   onPlayAgain: () => void;
 };
@@ -28,12 +28,12 @@ function formatTime(s: number) {
   return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 }
 
-export default function GameReadyScreen({ gameState, score, onScoreChange, onReset, onPlayAgain }: GameReadyScreenProps) {
+export default function GameReadyScreen({ gameState, score, onRecordResult, onReset, onPlayAgain }: GameReadyScreenProps) {
   const [showReveal, setShowReveal] = useState(false);
-  const [revealVisible, setRevealVisible] = useState(false);
   const [timerPreset, setTimerPreset] = useState(300);
   const [timerSeconds, setTimerSeconds] = useState(300);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [resultRecorded, setResultRecorded] = useState<"crewmates" | "imposters" | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const imposters = gameState.players.filter((p) => gameState.imposterIds.includes(p.id));
@@ -56,7 +56,6 @@ export default function GameReadyScreen({ gameState, score, onScoreChange, onRes
     };
   }, []);
 
-  // Re-acquire wake lock when tab becomes visible again
   useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState === "visible" && !wakeLockRef.current) {
@@ -93,6 +92,11 @@ export default function GameReadyScreen({ gameState, score, onScoreChange, onRes
     setTimerRunning(false);
   };
 
+  const handleRecordResult = (side: "crewmates" | "imposters") => {
+    setResultRecorded(side);
+    onRecordResult(side);
+  };
+
   const timerDone = timerSeconds === 0;
   const timerPct = timerPreset > 0 ? timerSeconds / timerPreset : 0;
   const timerColor = timerPct > 0.4 ? "text-foreground" : timerPct > 0.15 ? "text-yellow-400" : "text-destructive";
@@ -101,44 +105,60 @@ export default function GameReadyScreen({ gameState, score, onScoreChange, onRes
     <div className="fixed inset-0 bg-background flex flex-col overflow-y-auto" data-testid="game-ready-screen">
       <div className="w-full max-w-sm mx-auto px-4 py-6 flex flex-col gap-5" style={{ paddingBottom: "1.5rem" }}>
 
-        {/* Score tracker */}
+        {/* Score + record result */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 gap-3"
+          className="space-y-2"
         >
-          {/* Crewmates score */}
-          <div className="bg-card border border-primary/15 rounded-2xl p-3 flex flex-col items-center gap-2">
-            <p className="text-xs uppercase tracking-widest font-bold text-primary/70 flex items-center gap-1">
-              <Trophy className="w-3 h-3" /> Crew
-            </p>
-            <p className="text-4xl font-black text-foreground">{score.crewmates}</p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full h-8 text-xs font-bold border-primary/20 text-primary hover:bg-primary/10"
-              onClick={() => onScoreChange({ crewmates: score.crewmates + 1 })}
+          <p className="text-xs uppercase tracking-widest font-bold text-muted-foreground text-center">
+            {resultRecorded ? "Result Saved" : "Record Winner"}
+          </p>
+
+          {resultRecorded ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card border border-primary/15 rounded-2xl p-4 flex items-center justify-center gap-3 text-primary"
             >
-              +1 Win
-            </Button>
-          </div>
-          {/* Imposters score */}
-          <div className="bg-card border border-destructive/20 rounded-2xl p-3 flex flex-col items-center gap-2 relative overflow-hidden">
-            <div className="absolute inset-0 bg-destructive/5 pointer-events-none" />
-            <p className="text-xs uppercase tracking-widest font-bold text-destructive/70 flex items-center gap-1">
-              <Skull className="w-3 h-3" /> Imposters
-            </p>
-            <p className="text-4xl font-black text-destructive">{score.imposters}</p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full h-8 text-xs font-bold border-destructive/30 text-destructive hover:bg-destructive/10"
-              onClick={() => onScoreChange({ imposters: score.imposters + 1 })}
-            >
-              +1 Win
-            </Button>
-          </div>
+              <CheckCircle2 className="w-6 h-6" />
+              <span className="font-bold text-lg capitalize">
+                {resultRecorded === "crewmates" ? "Crew" : "Imposters"} win recorded — stats updated!
+              </span>
+            </motion.div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-card border border-primary/15 rounded-2xl p-3 flex flex-col items-center gap-2">
+                <p className="text-xs uppercase tracking-widest font-bold text-primary/70 flex items-center gap-1">
+                  <Trophy className="w-3 h-3" /> Crew
+                </p>
+                <p className="text-4xl font-black text-foreground">{score.crewmates}</p>
+                <Button
+                  size="sm"
+                  className="w-full h-8 text-xs font-bold"
+                  onClick={() => handleRecordResult("crewmates")}
+                >
+                  Crew Won
+                </Button>
+              </div>
+              <div className="bg-card border border-destructive/20 rounded-2xl p-3 flex flex-col items-center gap-2 relative overflow-hidden">
+                <div className="absolute inset-0 bg-destructive/5 pointer-events-none" />
+                <p className="text-xs uppercase tracking-widest font-bold text-destructive/70 flex items-center gap-1">
+                  <Skull className="w-3 h-3" /> Imposters
+                </p>
+                <p className="text-4xl font-black text-destructive">{score.imposters}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full h-8 text-xs font-bold border-destructive/30 text-destructive hover:bg-destructive/10"
+                  onClick={() => handleRecordResult("imposters")}
+                >
+                  Imposters Won
+                </Button>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Header */}
@@ -176,8 +196,6 @@ export default function GameReadyScreen({ gameState, score, onScoreChange, onRes
               <span className="text-xs font-bold text-destructive uppercase tracking-wider animate-pulse">Time's up!</span>
             )}
           </div>
-
-          {/* Preset buttons */}
           <div className="flex gap-1.5 flex-wrap">
             {TIMER_PRESETS.map(({ label, seconds }) => (
               <button
@@ -193,8 +211,6 @@ export default function GameReadyScreen({ gameState, score, onScoreChange, onRes
               </button>
             ))}
           </div>
-
-          {/* Timer display + controls */}
           <div className="flex items-center gap-3">
             <span className={`text-5xl font-black tabular-nums flex-1 ${timerColor}`}>
               {formatTime(timerSeconds)}
@@ -221,7 +237,7 @@ export default function GameReadyScreen({ gameState, score, onScoreChange, onRes
           </div>
         </motion.div>
 
-        {/* Reveal + action buttons */}
+        {/* Actions */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
