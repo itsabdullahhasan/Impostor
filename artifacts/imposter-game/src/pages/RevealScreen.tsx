@@ -68,7 +68,14 @@ export default function RevealScreen({ gameState, updateGameState, onReset }: Re
             <div className="space-y-4">
               <ShieldQuestion className="w-24 h-24 text-primary/50 mx-auto" />
               <h2 className="text-2xl text-muted-foreground uppercase tracking-widest font-semibold">Pass to</h2>
-              <h1 className="text-5xl font-black text-foreground truncate w-full px-4">{currentPlayer.name}</h1>
+              <h1
+                className="font-black text-foreground w-full px-4"
+                style={{
+                  fontSize: "clamp(1.75rem, 11vw, 3rem)",
+                  wordBreak: "break-word",
+                  overflowWrap: "anywhere",
+                }}
+              >{currentPlayer.name}</h1>
             </div>
             
             <p className="text-muted-foreground">Make sure nobody else is looking.</p>
@@ -104,8 +111,16 @@ export default function RevealScreen({ gameState, updateGameState, onReset }: Re
                   <h2 className="text-2xl text-primary uppercase tracking-widest font-black">
                     {isImposter ? "Your Word Is" : "You are a CREWMATE"}
                   </h2>
-                  <div className="bg-background/80 py-8 px-4 rounded-2xl border border-primary/20 shadow-inner">
-                    <h1 className="text-5xl md:text-6xl font-black text-foreground tracking-tight break-words">
+                  <div className="bg-background/80 py-8 px-4 rounded-2xl border border-primary/20 shadow-inner overflow-hidden w-full">
+                    <h1
+                      className="font-black text-foreground tracking-tight w-full"
+                      style={{
+                        fontSize: "clamp(1.75rem, 10vw, 3.5rem)",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        hyphens: "auto",
+                      }}
+                    >
                       {isImposter ? imposterWord : crewmateWord}
                     </h1>
                   </div>

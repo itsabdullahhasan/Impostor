@@ -314,7 +314,7 @@ export default function GameReadyScreen({ gameState, score, onRecordResult, onRe
                     transition={{ delay: i * 0.15 }}
                     className="bg-destructive/15 border border-destructive/30 rounded-2xl px-6 py-4"
                   >
-                    <p className="text-2xl font-black text-destructive">{p.name}</p>
+                    <p className="font-black text-destructive break-words overflow-hidden" style={{ fontSize: "clamp(1.25rem, 6vw, 1.5rem)", wordBreak: "break-word", overflowWrap: "anywhere" }}>{p.name}</p>
                   </motion.div>
                 ))}
               </div>
