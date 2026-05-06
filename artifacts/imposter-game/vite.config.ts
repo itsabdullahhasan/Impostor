@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
-  base: "/Imposter/",  // ← replace with your GitHub repo name
+  base: "/Impostor/",  // ← replace with your GitHub repo name
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
