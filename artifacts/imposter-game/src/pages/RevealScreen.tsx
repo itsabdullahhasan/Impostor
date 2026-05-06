@@ -109,7 +109,7 @@ export default function RevealScreen({ gameState, updateGameState, onReset }: Re
               ) : (
                 <>
                   <h2 className="text-2xl text-primary uppercase tracking-widest font-black">
-                    {isImposter ? "Your Word Is" : "You are a CREWMATE"}
+                    {isImposter ? "Your Word Is" : "Your Word Is"}
                   </h2>
                   <div className="bg-background/80 py-8 px-4 rounded-2xl border border-primary/20 shadow-inner overflow-hidden w-full">
                     <h1
