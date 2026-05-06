@@ -31,7 +31,7 @@ export const PREBUILT_THEMES: Theme[] = [
       { wordA: "Coffee", wordB: "Tea" },
       { wordA: "Beer", wordB: "Cider" },
       { wordA: "Wine", wordB: "Champagne" },
-      { wordA: "Lemonade", wordB: "Iced Tea" },,
+      { wordA: "Lemonade", wordB: "Iced Tea" },
       { wordA: "Curry", wordB: "Stir Fry" },
       { wordA: "Omelette", wordB: "Scrambled Eggs" },
       { wordA: "Peanut Butter", wordB: "Nutella" },
@@ -202,7 +202,7 @@ export const PREBUILT_THEMES: Theme[] = [
     { wordA: "Pirates of the Caribbean", wordB: "Peter Pan" },
     { wordA: "Sherlock Holmes", wordB: "Enola Holmes" },
   ],
-}
+},
   {
     id: "cities",
     name: "Cities",
